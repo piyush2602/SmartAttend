@@ -1,0 +1,47 @@
+# ── Python ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Virtual environments ──────────────────────────────────
+venv/
+.venv/
+env/
+backend/venv/
+
+# ── Environment / secrets (NEVER commit) ─────────────────
+backend/.env
+frontend/.env
+# .env.example files are safe to commit (no real secrets)
+
+# ── Node / Frontend ───────────────────────────────────────
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# ── OS & editor ──────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+*.code-workspace
+
+# ── Logs ─────────────────────────────────────────────────
+*.log
+npm-debug.log*
+
+# ── OpenCV / ML artifacts ─────────────────────────────────
+*.xml
+!backend/haarcascades/*.xml
+*.pkl
+*.h5
+*.pt
+*.onnx
