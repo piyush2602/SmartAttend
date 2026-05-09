@@ -19,9 +19,8 @@ services:
         value: https://smart-attend-ui.onrender.com # Update after frontend is created
 
   # ─── Frontend Static Site (React/Vite) ────────────────────────────────
-  - type: web
+  - type: static
     name: smart-attend-ui
-    env: static
     region: ohio
     plan: free
     rootDir: frontend
