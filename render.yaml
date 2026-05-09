@@ -1,0 +1,36 @@
+services:
+  # ─── Backend Web Service (Flask API) ──────────────────────────────────
+  - type: web
+    name: smart-attend-api
+    env: python
+    region: ohio
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: MONGO_URI
+        sync: false # Set this in Render dashboard
+      - key: JWT_SECRET
+        sync: false # Set this in Render dashboard
+      - key: DB_NAME
+        value: face_attendance
+      - key: CORS_ORIGINS
+        value: https://smart-attend-ui.onrender.com # Update after frontend is created
+
+  # ─── Frontend Static Site (React/Vite) ────────────────────────────────
+  - type: static
+    name: smart-attend-ui
+    env: static
+    region: ohio
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    publishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://smart-attend-api.onrender.com/api # Update with your API URL
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

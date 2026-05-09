@@ -5,10 +5,11 @@ PyJWT==2.12.1
 bcrypt==5.0.0
 python-dotenv==1.2.2
 numpy==2.4.4
-# opencv-contrib-python includes cv2.face (LBPH recognizer)
-opencv-contrib-python==4.13.0.92
+# Use headless version for server environments (no libGL dependency)
+opencv-contrib-python-headless==4.10.0.84
 Pillow==12.2.0
 scipy==1.17.1
 pandas==3.0.2
 openpyxl==3.1.5
 reportlab==4.5.0
+gunicorn==23.0.0

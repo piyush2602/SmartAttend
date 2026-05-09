@@ -38,15 +38,17 @@ def create_app():
     return app
 
 
-if __name__ == "__main__":
-    print("[APP] Connecting to MongoDB Atlas...")
-    try:
-        init_db()
-        print("[APP] MongoDB Atlas -- Connected [OK]")
-    except Exception as exc:
-        print(f"[APP] WARNING: DB init failed -- {exc}")
-        print("[APP] Server will start anyway; DB operations will retry on each request.")
+# Initialize app and database for production
+print("[APP] Connecting to MongoDB Atlas...")
+try:
+    init_db()
+    print("[APP] MongoDB Atlas -- Connected [OK]")
+except Exception as exc:
+    print(f"[APP] WARNING: DB init failed -- {exc}")
+    print("[APP] Server will start anyway; DB operations will retry on each request.")
 
-    app = create_app()
+app = create_app()
+
+if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
 
