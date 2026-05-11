@@ -41,12 +41,18 @@ def verify_fingerprint():
     data = request.json or {}
     target_user_id = data.get("user_id")
 
+    db = get_db()
+    target_finger_id = None
+    if target_user_id:
+        user_doc = db["users"].find_one({"_id": ObjectId(target_user_id)})
+        if user_doc:
+            target_finger_id = user_doc.get("fingerprint_id")
+
     # Trigger verification
-    result = fingerprint_service.verify()
+    result = fingerprint_service.verify(target_id=target_finger_id)
     
     if result["success"]:
         finger_id = result["fingerprint_id"]
-        db = get_db()
         
         # If target_user_id is provided, we check specifically for that user
         if target_user_id:

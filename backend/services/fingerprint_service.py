@@ -35,17 +35,22 @@ class FingerprintService:
         # Real hardware logic would go here
         return {"success": False, "message": "Hardware not connected"}
 
-    def verify(self):
+    def verify(self, target_id=None):
         """
         Simulates waiting for a finger and matching it.
         """
         if not self.use_hardware:
-            time.sleep(2)
-            # In simulation, we don't know who it is unless we mock it.
-            # For demonstration, we'll return a 'not found' or a specific ID if we had one.
-            return {"success": False, "message": "No match found (Simulated)"}
+            time.sleep(1.5)
+            # In simulation, if a target_id is provided, we succeed for that ID.
+            # Otherwise, we return a default successful ID for demo purposes.
+            demo_id = target_id if target_id else 1
+            return {
+                "success": True, 
+                "fingerprint_id": demo_id, 
+                "message": "Fingerprint matched (Simulated)"
+            }
         
-        return {"success": False, "message": "Hardware not connected"}
+        return {"success": False, "message": "Hardware sensor not responding"}
 
 # Singleton instance
 fingerprint_service = FingerprintService(use_hardware=False)
