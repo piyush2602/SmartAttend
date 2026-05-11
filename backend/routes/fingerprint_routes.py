@@ -47,36 +47,47 @@ def verify_fingerprint():
         user = db["users"].find_one({"fingerprint_id": finger_id})
         
         if user:
-            # Mark attendance
-            now = datetime.now()
+            # Record attendance
+            now = datetime.utcnow()
             today = now.strftime("%Y-%m-%d")
             time = now.strftime("%H:%M:%S")
             
-            # Check if already marked
             existing = db["attendance"].find_one({
-                "employee_id": user["employee_id"],
+                "user_id": user["_id"],
                 "date": today
             })
             
             if not existing:
-                db["attendance"].insert_one({
-                    "employee_id": user["employee_id"],
-                    "name": user["name"],
-                    "department": user["department"],
+                record = {
+                    "user_id": user["_id"],
+                    "name": user.get("name", ""),
+                    "employee_id": user.get("employee_id", ""),
+                    "department": user.get("department", ""),
                     "date": today,
                     "time": time,
-                    "method": "fingerprint"
-                })
+                    "status": "present",
+                    "method": "fingerprint",
+                    "profile_photo": user.get("profile_photo", "")
+                }
+                db["attendance"].insert_one(record)
                 return jsonify({
                     "success": True, 
-                    "message": f"Attendance marked for {user['name']}",
+                    "message": f"✅ Attendance marked for {user['name']}",
                     "user": {
                         "name": user["name"],
                         "employee_id": user["employee_id"]
                     }
-                })
+                }), 200
             else:
-                return jsonify({"success": True, "message": "Attendance already marked today", "already_marked": True})
+                return jsonify({
+                    "success": True, 
+                    "message": "Attendance already marked today", 
+                    "already_marked": True,
+                    "user": {
+                        "name": user["name"],
+                        "employee_id": user["employee_id"]
+                    }
+                }), 200
         else:
             return jsonify({"error": "Fingerprint recognized but user not found in database"}), 404
     else:
