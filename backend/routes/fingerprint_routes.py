@@ -40,6 +40,7 @@ def enroll_fingerprint():
 def verify_fingerprint():
     data = request.json or {}
     target_user_id = data.get("user_id")
+    print(f"[FingerprintRoute] Verify request for user_id: {target_user_id}")
 
     db = get_db()
     target_finger_id = None
@@ -47,9 +48,11 @@ def verify_fingerprint():
         user_doc = db["users"].find_one({"_id": ObjectId(target_user_id)})
         if user_doc:
             target_finger_id = user_doc.get("fingerprint_id")
+            print(f"[FingerprintRoute] Found target user: {user_doc.get('name')}, finger_id: {target_finger_id}")
 
     # Trigger verification
     result = fingerprint_service.verify(target_id=target_finger_id)
+    print(f"[FingerprintRoute] Service result: {result}")
     
     if result["success"]:
         finger_id = result["fingerprint_id"]

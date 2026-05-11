@@ -40,10 +40,11 @@ class FingerprintService:
         Simulates waiting for a finger and matching it.
         """
         if not self.use_hardware:
-            time.sleep(1.5)
-            # In simulation, if a target_id is provided, we succeed for that ID.
-            # Otherwise, we return a default successful ID for demo purposes.
-            demo_id = target_id if target_id else 1
+            time.sleep(0.8)
+            # In simulation, if we are doing a 1:1 match (target_id provided)
+            # or even if we just want a successful demo, we return success.
+            # We use target_id if available, otherwise default to a demo ID (999).
+            demo_id = target_id if target_id is not None else 999
             return {
                 "success": True, 
                 "fingerprint_id": demo_id, 
