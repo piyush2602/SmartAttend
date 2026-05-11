@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import Webcam from "react-webcam";
-import { getStats, getTodayAttendance, recognizeLive, verifyFingerprint, markAttendanceMPIN } from "../services/api";
-import { Users, UserCheck, Calendar, Clock, Wifi, WifiOff, Fingerprint, ScanFace, Loader2, Key } from "lucide-react";
+import { getStats, getTodayAttendance, recognizeLive, verifyFingerprint, markAttendanceMPIN, getUsers } from "../services/api";
+import { Users, UserCheck, Calendar, Clock, Wifi, WifiOff, Fingerprint, ScanFace, Loader2, Key, Search, ChevronDown } from "lucide-react";
 import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
@@ -15,11 +15,16 @@ export default function DashboardPage() {
 
   const [stats, setStats] = useState({ total_users: 0, today_attendance: 0, registered_faces: 0 });
   const [todayList, setTodayList] = useState([]);
+  const [users, setUsers] = useState([]);
   const [cameraOn, setCameraOn] = useState(false);
   const [recognitions, setRecognitions] = useState([]);
   const [now, setNow] = useState(new Date());
   const [activeMode, setActiveMode] = useState("face"); // "face", "finger", "mpin"
   const [verifyingFinger, setVerifyingFinger] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredStudents, setFilteredStudents] = useState([]);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [mpinData, setMpinData] = useState({ id: "", pin: "" });
   const [markingMpin, setMarkingMpin] = useState(false);
 
@@ -28,6 +33,7 @@ export default function DashboardPage() {
     const t = setInterval(() => setNow(new Date()), 1000);
     loadStats();
     loadToday();
+    loadUsers();
     return () => clearInterval(t);
   }, []);
 
@@ -42,6 +48,14 @@ export default function DashboardPage() {
     try {
       const res = await getTodayAttendance();
       setTodayList(res.data);
+    } catch {}
+  };
+
+  const loadUsers = async () => {
+    try {
+      const res = await getUsers();
+      setUsers(res.data);
+      setFilteredStudents(res.data);
     } catch {}
   };
 
@@ -153,9 +167,10 @@ export default function DashboardPage() {
   };
 
   const handleFingerVerify = async () => {
+    if (!selectedStudent) return toast.error("Please select a student first");
     setVerifyingFinger(true);
     try {
-      const res = await verifyFingerprint();
+      const res = await verifyFingerprint(selectedStudent.id);
       if (res?.data?.success && res?.data?.user) {
         toast.success(res.data.message);
         setRecognitions(prev => [
@@ -282,11 +297,66 @@ export default function DashboardPage() {
                   </div>
                 )
               ) : activeMode === "finger" ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-indigo-950 p-6 text-center gap-4">
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${verifyingFinger ? "bg-indigo-500 animate-pulse scale-110" : "bg-indigo-900 text-indigo-400"}`}>
-                    <Fingerprint size={32} />
+                <div className="absolute inset-0 flex flex-col bg-indigo-950 p-3 gap-2 overflow-hidden">
+                  <div className="flex items-center gap-2 bg-indigo-900/50 p-2 rounded-lg border border-indigo-800">
+                    <Search size={14} className="text-indigo-400" />
+                    <input 
+                      type="text" 
+                      placeholder="Search Name/ID..." 
+                      className="bg-transparent border-none text-white text-xs w-full outline-none"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        const q = e.target.value.toLowerCase();
+                        setFilteredStudents(users.filter(u => 
+                          u.name.toLowerCase().includes(q) || u.employee_id.toLowerCase().includes(q)
+                        ));
+                        setShowDropdown(true);
+                      }}
+                      onFocus={() => setShowDropdown(true)}
+                    />
                   </div>
-                  <button onClick={handleFingerVerify} disabled={verifyingFinger} className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg disabled:opacity-50">
+
+                  {showDropdown && searchQuery && (
+                    <div className="absolute top-12 left-3 right-3 bg-white rounded-lg shadow-xl z-50 max-h-40 overflow-y-auto">
+                      {filteredStudents.length > 0 ? filteredStudents.map(u => (
+                        <div 
+                          key={u.id}
+                          onClick={() => {
+                            setSelectedStudent(u);
+                            setSearchQuery(u.name);
+                            setShowDropdown(false);
+                          }}
+                          className="p-2 border-b border-gray-50 hover:bg-blue-50 cursor-pointer text-left"
+                        >
+                          <p className="text-[11px] font-bold text-gray-800">{u.name}</p>
+                          <p className="text-[9px] text-gray-500">{u.employee_id} • {u.department}</p>
+                        </div>
+                      )) : (
+                        <div className="p-4 text-[10px] text-gray-400">No student found</div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex-1 flex flex-col items-center justify-center gap-2">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${selectedStudent ? "bg-indigo-500 animate-pulse scale-110" : "bg-indigo-900 text-indigo-400"}`}>
+                      <Fingerprint size={24} />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold text-white">
+                        {selectedStudent ? selectedStudent.name : "Select Student First"}
+                      </p>
+                      <p className="text-[8px] text-indigo-300">
+                        {selectedStudent ? "Ready to Scan" : "Use search above"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={handleFingerVerify} 
+                    disabled={verifyingFinger || !selectedStudent} 
+                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg disabled:opacity-40"
+                  >
                     {verifyingFinger ? "Verifying..." : "Verify Fingerprint"}
                   </button>
                 </div>
