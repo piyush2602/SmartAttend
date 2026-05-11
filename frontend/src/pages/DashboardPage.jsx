@@ -156,17 +156,21 @@ export default function DashboardPage() {
     setVerifyingFinger(true);
     try {
       const res = await verifyFingerprint();
-      if (res.data.success) {
+      if (res?.data?.success && res?.data?.user) {
         toast.success(res.data.message);
         setRecognitions(prev => [
           {
             time: new Date().toLocaleTimeString(),
-            name: res.data.user.name,
-            employee_id: res.data.user.employee_id,
+            name: res.data.user.name || "Unknown",
+            employee_id: res.data.user.employee_id || "N/A",
             success: true,
           },
           ...prev
         ].slice(0, 20));
+        loadStats();
+        loadToday();
+      } else if (res?.data?.success && res?.data?.already_marked) {
+        toast.success(res.data.message);
         loadStats();
         loadToday();
       }
@@ -345,7 +349,7 @@ export default function DashboardPage() {
                   : <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-bold">{r.name[0]}</div>
                 }
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-gray-800 truncate">{r.name}</p>
+                  <p className="text-xs font-semibold text-gray-800 truncate">{r.name || "Unknown Student"}</p>
                   <p className="text-[10px] text-gray-500">{r.time}</p>
                 </div>
               </div>
@@ -361,7 +365,7 @@ function StatCard({ icon, bg, label, value }) {
   return (
     <div className="stat-card">
       <div className={`w-12 h-12 rounded-xl ${bg} flex items-center justify-center shrink-0 shadow-sm`}>{icon}</div>
-      <div className="min-w-0">
+      <div className="min-w-0 text-left">
         <p className="text-2xl font-bold text-gray-800 truncate">{value}</p>
         <p className="text-xs text-gray-500 truncate font-medium">{label}</p>
       </div>
