@@ -72,6 +72,6 @@ export const exportDepartmentExcel = (params) =>
 
 // Fingerprint Biometrics
 export const enrollFingerprint = (user_id) => API.post("/fingerprint/enroll", { user_id });
-export const verifyFingerprint = () => API.post("/fingerprint/verify", {});
+export const verifyFingerprint = (user_id = null) => API.post("/fingerprint/verify", { user_id });
 
 export default API;

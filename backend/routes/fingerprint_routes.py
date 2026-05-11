@@ -38,13 +38,22 @@ def enroll_fingerprint():
 @fingerprint_bp.route("/verify", methods=["POST"])
 @require_auth
 def verify_fingerprint():
+    data = request.json or {}
+    target_user_id = data.get("user_id")
+
     # Trigger verification
     result = fingerprint_service.verify()
     
     if result["success"]:
         finger_id = result["fingerprint_id"]
         db = get_db()
-        user = db["users"].find_one({"fingerprint_id": finger_id})
+        
+        # If target_user_id is provided, we check specifically for that user
+        if target_user_id:
+            user = db["users"].find_one({"_id": ObjectId(target_user_id)})
+        else:
+            # Fallback to general search (Identification mode)
+            user = db["users"].find_one({"fingerprint_id": finger_id})
         
         if user:
             # Record attendance
