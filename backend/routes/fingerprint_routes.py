@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from db import get_db
+from bson import ObjectId
 from services.fingerprint_service import fingerprint_service
 from utils.auth_middleware import require_auth
 from datetime import datetime
@@ -21,7 +22,7 @@ def enroll_fingerprint():
         db = get_db()
         # Update user with fingerprint ID and template data
         db["users"].update_one(
-            {"id": user_id},
+            {"_id": ObjectId(user_id)},
             {
                 "$set": {
                     "fingerprint_id": result["fingerprint_id"], 
