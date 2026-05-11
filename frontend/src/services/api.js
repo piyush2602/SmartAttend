@@ -51,6 +51,7 @@ export const resetSession = (session_id) =>
 export const getAttendance = (params) => API.get("/attendance/", { params });
 export const getStats = () => API.get("/attendance/stats");
 export const getTodayAttendance = () => API.get("/attendance/today");
+export const markAttendanceMPIN = (employee_id, mpin) => API.post("/attendance/mark-mpin", { employee_id, mpin });
 export const getFaceSamples = (userId) => API.get(`/users/${userId}/samples`);
 
 // ─── Export ─────────────────────────────────────────────

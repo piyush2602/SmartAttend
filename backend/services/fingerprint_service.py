@@ -21,10 +21,16 @@ class FingerprintService:
             # Simulate steps for UI feedback
             time.sleep(1)
             # In a real app, you might want to yield progress, 
-            # but for simplicity we'll just simulate a successful store.
-            # We return a unique integer ID that the sensor uses.
+            # We return a unique integer ID and the raw template data.
             finger_id = random.randint(1, 1000)
-            return {"success": True, "fingerprint_id": finger_id, "message": "Fingerprint enrolled successfully (Simulated)"}
+            # Simulated base64 template string
+            template = "SIMULATED_FINGERPRINT_TEMPLATE_DATA_" + str(finger_id)
+            return {
+                "success": True, 
+                "fingerprint_id": finger_id, 
+                "template": template,
+                "message": "Fingerprint enrolled and template captured (Simulated)"
+            }
         
         # Real hardware logic would go here
         return {"success": False, "message": "Hardware not connected"}

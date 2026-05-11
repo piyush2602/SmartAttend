@@ -17,20 +17,47 @@ import threading
 from bson import ObjectId
 from datetime import datetime
 
-# ── Haar cascade ─────────────────────────────────────────────────────────────
-_cascade = cv2.CascadeClassifier(
-    cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-)
+# ── Robust Cascade Loading ──────────────────────────────────────────────────
+import os
+
+def _load_cascade():
+    """Try various paths and types (Haar/LBP) to ensure a classifier is loaded."""
+    paths = [
+        cv2.data.haarcascades + "haarcascade_frontalface_default.xml",
+        cv2.data.haarcascades + "haarcascade_frontalface_alt2.xml",
+        cv2.data.haarcascades + "haarcascade_frontalface_alt.xml",
+        "haarcascade_frontalface_default.xml",  # local fallback
+    ]
+    
+    for p in paths:
+        if os.path.exists(p) or p.startswith(cv2.data.haarcascades):
+            c = cv2.CascadeClassifier(p)
+            if not c.empty():
+                print(f"[FaceService] Loaded cascade: {p}")
+                return c
+                
+    # If all Haar fail, try LBP (sometimes included in different paths)
+    lbp_p = cv2.data.haarcascades.replace("haarcascades", "lbpcascades") + "lbpcascade_frontalface.xml"
+    if os.path.exists(lbp_p):
+        c = cv2.CascadeClassifier(lbp_p)
+        if not c.empty():
+            print(f"[FaceService] Loaded LBP cascade: {lbp_p}")
+            return c
+            
+    print("[FaceService] WARNING: No face cascade loaded! Detection will fail.")
+    return cv2.CascadeClassifier()
+
+_cascade = _load_cascade()
 
 # ── Tuning constants ──────────────────────────────────────────────────────────
 FACE_SIZE       = (100, 100)   # LBPH training size
-LBPH_THRESHOLD  = 70           # confidence: lower = better; >70 = unknown
-DETECT_WIDTH    = 480          # resize frame to this width before detection (speed)
-MIN_FACE_RATIO  = 0.18         # min face width as fraction of frame width
-MIN_NEIGHBORS   = 10           # high value = very strict, eliminates background FP
-SCALE_FACTOR    = 1.15         # Haar step size (1.15 = faster than 1.1)
-MIN_ASPECT      = 0.65         # min w/h ratio  (pure circles ≈ 1.0)
-MAX_ASPECT      = 1.35         # max w/h ratio
+LBPH_THRESHOLD  = 85           # very forgiving threshold for matching
+DETECT_WIDTH    = 480          # standard processing width
+MIN_FACE_RATIO  = 0.10         # catch smaller/further faces
+MIN_NEIGHBORS   = 3            # extremely sensitive detection (catch anything)
+SCALE_FACTOR    = 1.1          # slower but more thorough search
+MIN_ASPECT      = 0.5          # loose aspect ratio (catch tilted faces)
+MAX_ASPECT      = 1.6          # loose aspect ratio
 
 _clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
 
@@ -111,8 +138,19 @@ def detect_faces(img: np.ndarray) -> list:
     Return list of (x, y, w, h) in ORIGINAL image coordinates.
     Detects on a downscaled copy for speed; maps back to full resolution.
     """
-    orig_h, orig_w = img.shape[:2]
+    if img is None or img.size == 0:
+        return []
 
+    orig_h, orig_w = img.shape[:2]
+    if orig_w == 0 or orig_h == 0:
+        return []
+
+    # Brightness/Contrast Normalization
+    # Helps with "milky" or dark camera feeds
+    alpha = 1.3  # Contrast
+    beta = 10    # Brightness
+    img = cv2.convertScaleAbs(img, alpha=alpha, beta=beta)
+    
     # Downscale for detection
     if orig_w > DETECT_WIDTH:
         scale = orig_w / DETECT_WIDTH
@@ -123,9 +161,9 @@ def detect_faces(img: np.ndarray) -> list:
         small = img
 
     gray = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
-    cv2.equalizeHist(gray, gray)          # fast global EQ for detection pass
+    gray = _clahe.apply(gray)             # high-quality contrast for detection
 
-    min_px = int(orig_w * MIN_FACE_RATIO / scale)   # min face size in small img
+    min_px = int(DETECT_WIDTH * MIN_FACE_RATIO)   # min face size in small img
     raw = _cascade.detectMultiScale(
         gray,
         scaleFactor  = SCALE_FACTOR,

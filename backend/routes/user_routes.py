@@ -18,6 +18,8 @@ def serialize_user(u):
         "department": u.get("department", ""),
         "email": u.get("email", ""),
         "face_registered": u.get("face_registered", False),
+        "fingerprint_registered": u.get("fingerprint_registered", False),
+        "mpin_registered": bool(u.get("mpin")),
         "profile_photo": u.get("profile_photo", ""),   # base64 or ""
         "created_at": u.get("created_at", datetime.utcnow()).isoformat()
     }
@@ -52,7 +54,10 @@ def create_user():
     doc = {
         "name": name, "employee_id": employee_id,
         "department": department, "email": email,
-        "face_registered": False, "profile_photo": "",
+        "face_registered": False, 
+        "fingerprint_registered": False,
+        "mpin": "",
+        "profile_photo": "",
         "created_at": datetime.utcnow()
     }
     result = db["users"].insert_one(doc)
@@ -75,7 +80,7 @@ def get_user(user_id):
 def update_user(user_id):
     data = request.get_json()
     db = get_db()
-    update = {k: data[k] for k in ["name", "department", "email"] if k in data}
+    update = {k: data[k] for k in ["name", "department", "email", "mpin"] if k in data}
     if not update:
         return jsonify({"error": "Nothing to update"}), 400
     db["users"].update_one({"_id": ObjectId(user_id)}, {"$set": update})

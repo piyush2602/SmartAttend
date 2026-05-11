@@ -19,10 +19,16 @@ def enroll_fingerprint():
     
     if result["success"]:
         db = get_db()
-        # Update user with fingerprint ID
+        # Update user with fingerprint ID and template data
         db["users"].update_one(
             {"id": user_id},
-            {"$set": {"fingerprint_id": result["fingerprint_id"], "fingerprint_registered": True}}
+            {
+                "$set": {
+                    "fingerprint_id": result["fingerprint_id"], 
+                    "fingerprint_template": result["template"],
+                    "fingerprint_registered": True
+                }
+            }
         )
         return jsonify(result)
     else:

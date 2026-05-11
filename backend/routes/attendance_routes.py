@@ -187,6 +187,63 @@ def reset_session_ep():
     return jsonify({"message": "Reset"}), 200
 
 
+@attendance_bp.route("/mark-mpin", methods=["POST"])
+@require_auth
+def mark_mpin():
+    data = request.get_json()
+    employee_id = data.get("employee_id")
+    mpin = data.get("mpin")
+
+    if not employee_id or not mpin:
+        return jsonify({"error": "Employee ID and MPIN are required"}), 400
+
+    db = get_db()
+    user = db["users"].find_one({"employee_id": employee_id})
+    
+    if not user:
+        return jsonify({"error": "Student not found"}), 404
+    
+    if not user.get("mpin"):
+        return jsonify({"error": "MPIN not set for this student"}), 400
+        
+    if user.get("mpin") != mpin:
+        return jsonify({"error": "Invalid MPIN"}), 401
+
+    # Record attendance
+    now = datetime.utcnow()
+    today = date.today().isoformat()
+    
+    existing = db["attendance"].find_one({
+        "user_id": user["_id"],
+        "date": today
+    })
+    
+    if not existing:
+        record = {
+            "user_id": user["_id"],
+            "name": user["name"],
+            "employee_id": user["employee_id"],
+            "department": user.get("department", ""),
+            "date": today,
+            "time": now.strftime("%H:%M:%S"),
+            "status": "present",
+            "method": "mpin",
+            "profile_photo": user.get("profile_photo", "")
+        }
+        db["attendance"].insert_one(record)
+        return jsonify({
+            "success": True, 
+            "message": f"✅ Attendance marked for {user['name']}",
+            "record": serialize_record(record)
+        }), 200
+    else:
+        return jsonify({
+            "success": True, 
+            "message": "Attendance already marked today",
+            "record": serialize_record(existing)
+        }), 200
+
+
 # ── History / Stats ──────────────────────────────────────────────────────────
 @attendance_bp.route("/", methods=["GET"])
 @require_auth
