@@ -22,7 +22,7 @@ API.interceptors.response.use(
       window.location.href = "/login";
     }
     return Promise.reject(err);
-  }
+  },
 );
 
 // ─── Auth ──────────────────────────────────────────────
@@ -60,5 +60,17 @@ export const exportExcel = (params) =>
   API.get("/export/excel", { params, responseType: "blob" });
 export const exportPDF = (params) =>
   API.get("/export/pdf", { params, responseType: "blob" });
+export const exportPersonPDF = (params) =>
+  API.get("/export/person-pdf", { params, responseType: "blob" });
+export const exportPersonExcel = (params) =>
+  API.get("/export/person-excel", { params, responseType: "blob" });
+export const exportDepartmentPDF = (params) =>
+  API.get("/export/department-pdf", { params, responseType: "blob" });
+export const exportDepartmentExcel = (params) =>
+  API.get("/export/department-excel", { params, responseType: "blob" });
+
+// Fingerprint Biometrics
+export const enrollFingerprint = (user_id) => API.post("/fingerprint/enroll", { user_id });
+export const verifyFingerprint = () => API.post("/fingerprint/verify", {});
 
 export default API;

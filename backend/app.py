@@ -6,6 +6,7 @@ from routes.auth_routes import auth_bp
 from routes.user_routes import user_bp
 from routes.attendance_routes import attendance_bp
 from routes.export_routes import export_bp
+from routes.fingerprint_routes import fingerprint_bp
 
 
 def create_app():
@@ -17,6 +18,7 @@ def create_app():
     app.register_blueprint(user_bp, url_prefix="/api/users")
     app.register_blueprint(attendance_bp, url_prefix="/api/attendance")
     app.register_blueprint(export_bp, url_prefix="/api/export")
+    app.register_blueprint(fingerprint_bp, url_prefix="/api/fingerprint")
 
     @app.route("/api/health", methods=["GET"])
     def health():
